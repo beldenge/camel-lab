@@ -1,5 +1,5 @@
 # camel-lab
-Base lab project for Apache Camel tech talk
+This is the base lab project for the Apache Camel tech talk by George Belden.
 
 ##Prerequisites##
 * JDK 1.6+
@@ -8,12 +8,12 @@ Base lab project for Apache Camel tech talk
 * Git client
 
 ##Lab Scenario
-Pour Decisions Homebrewing, a new homebrewing supplies retailer, needs our expert skills to integrate their enrollment process for their new rewards program.
+Pour Decisions Homebrewing, a homebrewing supplies retailer, is implementing a new rewards program for their customers which requires our expert skills to integrate the enrollment process with this new program.  We will strive to show them the power and brevity of Apache Camel's Java DSL.
 
 ###Requirements
 1. Process enrollment files from a directory, send them to a JMS endpoint
 2. Filter out files that should not be processed
-3. Unmarshal the enrollment data to Java objects for processing, and then marshal them into JSON
+3. Unmarshal the enrollment data to Java objects for process-ing, and then marshal them into JSON
 4. The records in the file should be split so they can be processed independently
 5. Implement a content-based router to perform different tasks depending on the message body
 6. Invoke a "lookup" service (implemented as a bean)
@@ -21,13 +21,9 @@ Pour Decisions Homebrewing, a new homebrewing supplies retailer, needs our exper
 8. **Extra credit:** test the route with a JUnit test
 
 ##Lab 1
-Import existing maven project
-Group: com.redhat.techtalks
-Artifact: camel-lab
-Version: 0.0.1-SNAPSHOT
-Packaging: jar
+Begin by cloning this project and importing it into Eclipse as an existing maven project.  We will build onto it in the following labs.
 
-Add dependencies to pom (camel-core, camel-jms, activemq-all)
+To start, we will need a few initial dependencies in our pom.  The camel.version property should already be defined.
 ```
 		<dependency>
 			<groupId>org.apache.camel</groupId>
@@ -48,7 +44,9 @@ Add dependencies to pom (camel-core, camel-jms, activemq-all)
 	
 Create class EnrollmentRouteBuilder
 Package: com.redhat.techtalks.camel.routes
-Extends: RouteBuilder
+Superclass: RouteBuilder
+
+Override the configure() method, and inside here we will add a couple of very simple routes.  This will poll a directory for new files and send them to a JMS endpoint.  Since this is a new endpoint, we define the second route to just read from that endpoint and log the payload so the messages don't sit on the queue indefinitely.
 ```
 		from("file:input?noop=true")
 			.to("jms:queue:enrollees");
@@ -56,10 +54,11 @@ Extends: RouteBuilder
 		from("jms:queue:enrollees")
 			.to("log:com.redhat.techtalks.camel?level=INFO&showAll=true");
 ```
+
 Examine input directory
-	-3 input files
-	
-Configure queue manager and main class
+	-Here we have 3 input files, only 2 of which are related to rewards enrollment
+
+Configure queue manager and main method.
 Create class EnrollmentApplication
 Package: com.redhat.techtalks.camel
 ```
@@ -77,7 +76,7 @@ Package: com.redhat.techtalks.camel
 		camelContext.stop();
 	}
 ```
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`
 Examine logs
 	
 ##Lab 2
