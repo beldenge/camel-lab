@@ -1,0 +1,2 @@
+cuervo|jose|1975-05-05|ES
+daniels|jack|1957-10-28|EN
