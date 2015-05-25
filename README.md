@@ -46,7 +46,7 @@ To start, we will need a few initial dependencies in our pom.  The camel.version
 	
 Create class EnrollmentRouteBuilder  
 Package: com.redhat.techtalks.camel.routes  
-Superclass: RouteBuilder
+Superclass: org.apache.camel.builder.RouteBuilder
 
 Override the configure() method, and inside here we will add a couple of very simple routes.  This will poll a directory for new files and send them to a JMS endpoint.  Since this is a new endpoint, we define the second route to just read from that endpoint and log the payload so the messages don't sit on the queue indefinitely.
 ```Java
