@@ -157,7 +157,7 @@ Examine the logs.  This time it should run without errors.  Also check out the m
 ##Lab 4
 The problem is that our data structure is pretty unwieldy, as Bindy structures it as a List of HashMaps keyed by the record type.
 
-Add a splitter before the unmarshal processor:
+Add a splitter between the unmarshal and marshal steps:
 ```Java
 .split(body())
 ```
