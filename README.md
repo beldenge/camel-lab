@@ -42,8 +42,8 @@ To start, we will need a few initial dependencies in our pom.  The camel.version
 		</dependency>
 ```
 	
-Create class EnrollmentRouteBuilder
-Package: com.redhat.techtalks.camel.routes
+Create class EnrollmentRouteBuilder  
+Package: com.redhat.techtalks.camel.routes  
 Superclass: RouteBuilder
 
 Override the configure() method, and inside here we will add a couple of very simple routes.  This will poll a directory for new files and send them to a JMS endpoint.  Since this is a new endpoint, we define the second route to just read from that endpoint and log the payload so the messages don't sit on the queue indefinitely.
@@ -56,10 +56,10 @@ Override the configure() method, and inside here we will add a couple of very si
 ```
 
 Examine input directory
-*Here we have 3 input files, only 2 of which are related to rewards enrollment
+* Here we have 3 input files, only 2 of which are related to rewards enrollment
 
-Configure queue manager and main method.
-Create class EnrollmentApplication
+Configure queue manager and main method.  
+Create class EnrollmentApplication  
 Package: com.redhat.techtalks.camel
 ```Java
 	public static void main(String[] args) throws Exception {
@@ -76,7 +76,7 @@ Package: com.redhat.techtalks.camel
 		camelContext.stop();
 	}
 ```
-Right click EnrollmentApplication.java, `Run As --> Java Application`
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs
 	
 ##Lab 2
@@ -91,7 +91,7 @@ Antoher way you could do this in our specific scenario would be to do the follow
 ```Java
 	from("file:input?noop=true&antInclude=rewards*.txt")
 ```
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs
 	
 ##Lab 3
@@ -123,7 +123,7 @@ public class Enrollment {
     @DataField(pos = 4)
     private String language;
 ```
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs
 
 Seeing serialization errors?  We could fix this by making the Enrollment class implement serializable.  Instead, let's convert it to Json.
@@ -140,7 +140,7 @@ Remember to include the Jackson dependency.
 			<version>${camel.version}</version>
 		</dependency>
 ```		
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs, it should run without errors this time.  Also check out the message body.
 
 ##Lab 4
@@ -150,7 +150,7 @@ Add a splitter before we do the unmarshalling:
 ```Java
 .split(body())
 ```
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs.
 
 It's four separate message now, but they are still represented as HashMaps.  This is due to the way that Bindy unmarshals data, as it could potentially unmarshal a single record into multiple classes.
@@ -159,7 +159,7 @@ After our splitter, add the following:
 ```Java
 .setBody(simple("${body[com.redhat.techtalks.camel.model.Enrollment]}"))
 ```
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs.  Now we have just the json representation of the Enrollment class in the message body.
 
 Add a content-based router just before the marshal to JSON.
@@ -176,7 +176,7 @@ Add a content-based router just before the marshal to JSON.
 					.endChoice()
 			.end()
 ```			
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs.  You should see the greetings displayed as expected.
 
 ##Lab 5
@@ -185,12 +185,12 @@ Add a bean processor to "enrich" the message with the age calculated from the en
 			.unmarshal().json(JsonLibrary.Jackson, Enrollment.class)
 			.bean(new AgeCalculator(), "calculateAge(${body.dateOfBirth})")
 ```			
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs.
 
 The first message failed.  Quickly examine the AgeCalculator class to understand why.
 
-Add retry logic:
+Add retry logic:  
 Immediately after the consumer on the second route, add an error handler definition:
 ```Java
 			.onException(IOException.class)
@@ -198,7 +198,7 @@ Immediately after the consumer on the second route, add an error handler definit
 				.redeliveryDelay(500)
 			.end()
 ```			
-Right click EnrollmentApplication.java, Run As --> Java Application
+Right click EnrollmentApplication.java, `Run As --> Java Application`  
 Examine logs.  We still see part of a stacktrace.  Why?  Can we confirm that the message was successfully retried?
 
 
@@ -212,8 +212,8 @@ Add a test-scoped dependency:
 			<scope>test</scope>
 		</dependency>
 ```
-Create class EnrollmentRouteBuilderTest
-Package: com.redhat.techtalks.camel
+Create class EnrollmentRouteBuilderTest  
+Package: com.redhat.techtalks.camel  
 Extends: CamelTestSupport
 
 Add the following in the createCamelContext() method:
@@ -242,9 +242,9 @@ Add a junit test:
 		mock.assertIsSatisfied();
 	}
 ```	
-Wait, what is sending to this mock queue?
+Wait, what is sending to this mock queue?  
 Unfortunately, we have to augment our route with this (add at very end of second route):
 ```Java
 .to("mock:testQueue")
 ```
-Right click EnrollmentRouteBuilder.java, Run As --> JUnit Test
+Right click EnrollmentRouteBuilder.java, `Run As --> JUnit Test`  
