@@ -58,9 +58,13 @@ Override the configure() method, and inside here we will add a couple of very si
 Examine input directory
 * Here we have 3 input files, only 2 of which are related to rewards enrollment
 
-Configure queue manager and main method.  
+Examine log4j.properties
+* Camel integrates with log4j by default
+
 Create class EnrollmentApplication  
-Package: com.redhat.techtalks.camel
+Package: com.redhat.techtalks.camel  
+
+Configure queue manager and main method.
 ```Java
 	public static void main(String[] args) throws Exception {
 		ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost");
@@ -77,44 +81,50 @@ Package: com.redhat.techtalks.camel
 	}
 ```
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs
+Examine the logs to see that the contents of each file are logged by the second route.
 	
 ##Lab 2
-Add before producer endpoint
+In the first route, add the following before the producer endpoint:
 ```Java
 .filter(header("CamelFileNameOnly").startsWith("rewards"))
 ```
-Examine log4j.properties
 
-
-Antoher way you could do this in our specific scenario would be to do the following, but we decided to go with the message filter EIP since it is more flexible when working with different types of endpoints.
+Anoher way you could do this in our specific scenario would be to do the following, but we decided to go with the message filter EIP since it is more flexible when working with different types of endpoints.
 ```Java
 	from("file:input?noop=true&antInclude=rewards*.txt")
 ```
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs
+Examine the logs to see that only the rewards enrollment files are processed.
 	
 ##Lab 3
-Add before route
+Add the following at the top of EnrollmentRouteBuilder:
 ```Java
 	DataFormat bindy = new BindyCsvDataFormat("com.redhat.techtalks.camel.model");
 ```
-Add after filer processor
+Immediately after the filter processor, add the following:
 ```Java
 	.unmarshal(bindy)
 ```
-Seeing workspace errors?  Add camel-bindy dependency:
+Seeing workspace errors?  We need to add the camel-bindy dependency:
+```XML
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-bindy</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+```
 
 Examine rewards*.txt files
+* Notice the file contains last name, first name, date of birth, and language
 
-Update Enrollment.java
+Update Enrollment.java so Camel will know how to parse this file:
 ```Java
 @CsvRecord(separator = "\\|", crlf = "WINDOWS")
 public class Enrollment {
     @DataField(pos = 1)
     private String lastName;
 
-	@DataField(pos = 2)
+    @DataField(pos = 2)
     private String firstName;
 
     @DataField(pos = 3, pattern = "yyyy-MM-dd")
@@ -124,15 +134,14 @@ public class Enrollment {
     private String language;
 ```
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs
 
-Seeing serialization errors?  We could fix this by making the Enrollment class implement serializable.  Instead, let's convert it to Json.
+Seeing serialization errors?  We could fix this by making the Enrollment class implement serializable.  Instead, let's convert it to JSON.
 
 Add after the unmarshal processor:
 ```Java
 .marshal().json(JsonLibrary.Jackson)
 ```
-Remember to include the Jackson dependency.
+Be sure to include the Jackson dependency:
 ```XML
 		<dependency>
 			<groupId>org.apache.camel</groupId>
@@ -141,17 +150,17 @@ Remember to include the Jackson dependency.
 		</dependency>
 ```		
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs, it should run without errors this time.  Also check out the message body.
+Examine the logs.  This time it should run without errors.  Also check out the message body to see that it is formatted as JSON.
 
 ##Lab 4
-The problem is that our json message is pretty unwieldy, as it is a List of HashMaps keyed by the record type.
+The problem is that our data structure is pretty unwieldy, as Bindy structures it as a List of HashMaps keyed by the record type.
 
-Add a splitter before we do the unmarshalling:
+Add a splitter before the unmarshal processor:
 ```Java
 .split(body())
 ```
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs.
+Examine the logs.
 
 It's four separate message now, but they are still represented as HashMaps.  This is due to the way that Bindy unmarshals data, as it could potentially unmarshal a single record into multiple classes.
 
@@ -160,9 +169,10 @@ After our splitter, add the following:
 .setBody(simple("${body[com.redhat.techtalks.camel.model.Enrollment]}"))
 ```
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs.  Now we have just the json representation of the Enrollment class in the message body.
+Examine the logs.  Now we have just the JSON representation of the Enrollment class in the message body.
 
-Add a content-based router just before the marshal to JSON.
+##Lab 5
+Add a content-based router just before we marshal to JSON.
 ```Java
 			.choice()
 				.when(simple("${body.language} == 'ES'"))
@@ -177,20 +187,21 @@ Add a content-based router just before the marshal to JSON.
 			.end()
 ```			
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs.  You should see the greetings displayed as expected.
+Examine the logs.  You should see the greetings displayed as expected.
 
-##Lab 5
+##Lab 6
 Add a bean processor to "enrich" the message with the age calculated from the enrollee's date of birth.  Add this just after the consumer on the second route.
 ```Java
 			.unmarshal().json(JsonLibrary.Jackson, Enrollment.class)
 			.bean(new AgeCalculator(), "calculateAge(${body.dateOfBirth})")
 ```			
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs.
+Examine the logs.
 
 The first message failed.  Quickly examine the AgeCalculator class to understand why.
 
-Add retry logic:  
+##Lab 7
+We need to add some retry logic.  
 Immediately after the consumer on the second route, add an error handler definition:
 ```Java
 			.onException(IOException.class)
@@ -199,8 +210,7 @@ Immediately after the consumer on the second route, add an error handler definit
 			.end()
 ```			
 Right click EnrollmentApplication.java, `Run As --> Java Application`  
-Examine logs.  We still see part of a stacktrace.  Why?  Can we confirm that the message was successfully retried?
-
+Examine the logs.  We still see part of a stacktrace.  Why?  Can we confirm that the message was successfully retried?
 
 ##Extra Credit
 Add a test-scoped dependency:
@@ -216,7 +226,7 @@ Create class EnrollmentRouteBuilderTest
 Package: com.redhat.techtalks.camel  
 Extends: CamelTestSupport
 
-Add the following in the createCamelContext() method:
+Override the createCamelContext() method and add the following in the method body:
 ```Java
 		ConnectionFactory connectionFactory = new ActiveMQConnectionFactory("vm://localhost");
 
@@ -226,7 +236,7 @@ Add the following in the createCamelContext() method:
 
 		return camelContext;
 ```		
-Add the following in the createRouteBuilder() method:
+Override the createRouteBuilder() method and add the following in method body:
 ```Java
 		return new EnrollmentRouteBuilder();
 ```		
@@ -243,8 +253,9 @@ Add a junit test:
 	}
 ```	
 Wait, what is sending to this mock queue?  
-Unfortunately, we have to augment our route with this (add at very end of second route):
+Unfortunately, we have to augment our original route with this (add at very end of the second route):
 ```Java
 .to("mock:testQueue")
 ```
 Right click EnrollmentRouteBuilder.java, `Run As --> JUnit Test`  
+Examine the logs.  The test should succeed.  If not, take a look at the solution project.
