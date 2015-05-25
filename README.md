@@ -1,6 +1,8 @@
 # camel-lab
 This is the base lab project for the Apache Camel tech talk by George Belden.
 
+The completed solution is available at [https://github.com/beldenge/camel-lab-solution](https://github.com/beldenge/camel-lab-solution).
+
 ##Prerequisites##
 * JDK 1.6+
 * Maven
@@ -10,7 +12,7 @@ This is the base lab project for the Apache Camel tech talk by George Belden.
 ##Lab Scenario
 Pour Decisions Homebrewing, a homebrewing supplies retailer, is implementing a new rewards program for their customers which requires our expert skills to integrate the enrollment process with this new program.  We will strive to show them the power and brevity of Apache Camel's Java DSL.
 
-###Requirements
+##Requirements
 1. Process enrollment files from a directory, send them to a JMS endpoint
 2. Filter out files that should not be processed
 3. Unmarshal the enrollment data to Java objects for process-ing, and then marshal them into JSON
@@ -258,4 +260,4 @@ Unfortunately, we have to augment our original route with this (add at very end 
 .to("mock:testQueue")
 ```
 Right click EnrollmentRouteBuilder.java, `Run As --> JUnit Test`  
-Examine the logs.  The test should succeed.  If not, take a look at the solution project.
+Examine the logs.  The test should succeed.  If not, take a look at the [solution project](https://github.com/beldenge/camel-lab-solution).
