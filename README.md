@@ -261,3 +261,11 @@ Unfortunately, we have to augment our original route with this (add at very end 
 ```
 Right click EnrollmentRouteBuilder.java, `Run As --> JUnit Test`  
 Examine the logs.  The test should succeed.  If not, take a look at the [solution project](https://github.com/beldenge/camel-lab-solution).
+
+##Best Practices
+Here we spun up our CamelContext manually and let it die after a static amount of time.  This is very inflexible and obviously not a best practice for Camel applications.
+
+One other option for standalone applications is to instantiate a 
+[Main class](https://camel.apache.org/running-camel-standalone-and-have-it-keep-running.html).
+
+We can also externalize our endpoint URIs to make our code more readable and enable us to change endpoint options without rebuilding our entire application.  Check out the "Bridging Spring and Camel property placeholders" section in the [Using PropertyPlaceholder](https://camel.apache.org/using-propertyplaceholder.html) page.
