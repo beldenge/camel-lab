@@ -226,7 +226,7 @@ Add a test-scoped dependency:
 ```
 Create class EnrollmentRouteBuilderTest  
 Package: com.redhat.techtalks.camel  
-Extends: CamelTestSupport
+Extends: org.apache.camel.test.junit4.CamelTestSupport
 
 Override the createCamelContext() method and add the following in the method body:
 ```Java
